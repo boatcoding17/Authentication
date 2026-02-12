@@ -2,17 +2,23 @@
 
 import { Module } from '@nestjs/common'; 
 
-import { AppController } from './app.controller'; 
+// import { AppController } from './app.controller';  ตัดออกไม่ได้ใช้ 
 
-import { AppService } from './app.service'; 
+// import { AppService } from './app.service';   ตัดออกไม่ได้ใช้ 
 
 import { ConfigModule, ConfigService } from '@nestjs/config'; 
 
 import { MongooseModule } from '@nestjs/mongoose'; 
-import { UsersModule } from './users/users.module';
-import { AuthModule } from './auth/auth.module';
+
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler'; 
+
+import { APP_GUARD } from '@nestjs/core'; 
 
  
+
+import { UsersModule } from './users/users.module'; 
+
+import { AuthModule } from './auth/auth.module'; 
 
 @Module({ 
 
@@ -20,7 +26,23 @@ import { AuthModule } from './auth/auth.module';
 
     isGlobal: true, 
 
-  }), MongooseModule.forRootAsync({ 
+  }), 
+
+  // ตั้งค่า rate limiting โดยใช้ ThrottlerModule  
+
+  ThrottlerModule.forRoot([ 
+
+    { 
+
+      ttl: 60_000,  // 1 minute 
+
+      limit: 100,   // 100 requests per minute 
+
+    }, 
+
+  ]), 
+
+  MongooseModule.forRootAsync({ 
 
     imports: [ConfigModule], 
 
@@ -34,9 +56,13 @@ import { AuthModule } from './auth/auth.module';
 
   }), UsersModule, AuthModule], 
 
-  controllers: [AppController], 
+  // controllers: [AppController],  ตัดออกไม่ได้ใช้ 
 
-  providers: [AppService], 
+ 
+
+  // *** สำหรับการตั้งค่า global guard กรณีกันโดนยิง API รัว ๆ ทั้งระบบ ThrottlerGuard *** 
+
+  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }], 
 
 }) 
 

@@ -1,9 +1,23 @@
-// src/products/products.controller.ts 
-import { Roles } from "../decorators/roles.decorator";
- 
+import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
+import { ProductsService } from './products.service';
+import { Roles } from '../decorators/roles.decorator';
+import { AccessTokenGuard } from '../guards/access-token.guard';
+import { RolesGuard } from '../guards/roles.guard';
 
-  // เพื่อความปลอดภัย เพิ่ม Guards และ Roles ของการเพิ่มสินค้า *** import มาจาก Auth Module ที่สร้างไว้ก่อนหน้า *** 
+@Controller('products')
+export class ProductsController {
 
-  @UseGuards(AccessTokenGuard, RolesGuard) 
+  constructor(private productsService: ProductsService) {}
 
+  @Get()
+  findAll() {
+    return this.productsService.findAll();
+  }
+
+  @Post()
+  @UseGuards(AccessTokenGuard, RolesGuard)
   @Roles('admin')
+  create(@Body() body: any) {
+    return this.productsService.create(body);
+  }
+}
